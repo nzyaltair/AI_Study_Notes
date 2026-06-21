@@ -1,0 +1,6 @@
+{
+  "phycat-layout@@layout-style": "layout-cards",
+  "phycat-colors@@light-color-scheme": "theme-light-prussian",
+  "phycat-colors@@dark-color-scheme": "theme-dark-radiation",
+  "phycat-layout@@rainbow-folders": true
+}

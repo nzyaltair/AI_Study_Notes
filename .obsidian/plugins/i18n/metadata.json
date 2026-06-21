@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "sources": {
+    "52jLowm8bDeXnxFszlUmcwzg6zcl4gk_": {
+      "id": "52jLowm8bDeXnxFszlUmcwzg6zcl4gk_",
+      "plugin": "obsidian-hover-editor",
+      "title": "Hover Editor",
+      "type": "plugin",
+      "origin": "cloud",
+      "isActive": false,
+      "checksum": "79b0fcd4ad2066ad7be0c6bb7f97ceb84a1064413aad3239401705932562a51d",
+      "cloud": {
+        "owner": "yunrr",
+        "repo": "obsidian-i18n-resources",
+        "hash": "3141f7003141f7003141f7003141f700"
+      },
+      "updatedAt": 1777600871793,
+      "createdAt": 1777600871793
+    }
+  }
+}

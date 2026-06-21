@@ -1,0 +1,7 @@
+{
+  "promptDelete": false,
+  "livePreview": true,
+  "defaultViewMode": "preview",
+  "strictLineBreaks": false,
+  "attachmentFolderPath": "./assets"
+}

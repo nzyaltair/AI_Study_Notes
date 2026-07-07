@@ -3,5 +3,6 @@
   "livePreview": true,
   "defaultViewMode": "preview",
   "strictLineBreaks": false,
-  "attachmentFolderPath": "./assets"
+  "attachmentFolderPath": "./assets",
+  "alwaysUpdateLinks": true
 }

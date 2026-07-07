@@ -1,4 +1,5 @@
 {
   "theme": "obsidian",
-  "cssTheme": "Phycat"
+  "cssTheme": "Phycat",
+  "baseFontSize": 12
 }

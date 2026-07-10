@@ -137,11 +137,11 @@ $$J(\phi) = \mathbb{E}_{(x, y) \sim p_\phi} \left[r_\theta(x, y)\right] - \beta 
 
 ## 8. 与其他技术关系
 
-- RLAIF是[[RLHF]]的变体，仅反馈来源不同
-- RLAIF可与[[DPO]]结合，跳过奖励模型阶段
+- RLAIF是[[05_RLHF|RLHF]]的变体，仅反馈来源不同
+- RLAIF可与[[06_DPO|DPO]]结合，跳过奖励模型阶段
 - Constitutional AI是RLAIF的重要变体
 - 反馈质量依赖于反馈生成模型的能力
-- 与[[GRPO]]中的规则奖励有互补性
+- 与[[08_GRPO|GRPO]]中的规则奖励有互补性
 
 ## 9. 前沿发展
 

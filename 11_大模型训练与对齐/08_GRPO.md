@@ -132,8 +132,8 @@ DeepSeek-R1使用两类基于规则的奖励：
 
 ## 8. 与其他技术关系
 
-- GRPO是[[RLHF]]的简化变体，去除了奖励模型和Critic
-- 与[[DPO]]不同，GRPO仍使用在线强化学习（on-policy）
+- GRPO是[[05_RLHF|RLHF]]的简化变体，去除了奖励模型和Critic
+- 与[[06_DPO|DPO]]不同，GRPO仍使用在线强化学习（on-policy）
 - GRPO的PPO裁剪机制来源于PPO算法（方向13）
 - KL惩罚项参考了RLHF的设计
 - GRPO是推理模型训练的关键技术（详见方向10的推理模型与思维链）

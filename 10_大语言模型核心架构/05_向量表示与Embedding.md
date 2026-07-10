@@ -1,247 +1,112 @@
-# 向量表示与Embedding
+# 向量表示与 Embedding（LLM 架构视角）
 
-## 1. 概述
+## 一句话理解
 
-向量表示是将文本、图像等非结构化数据转换为数值向量的过程。嵌入（Embedding）是神经网络学习得到的低维稠密向量，能够捕获语义关系——语义相似的内容在嵌入空间中距离更近。
+在大语言模型架构中，Embedding 是将离散 token id 映射为连续向量的查找表层（$E \in \mathbb{R}^{V \times d}$），是模型唯一的输入接口；其设计要点是词表划分、维度选择、缩放与权重 tying。
 
-从One-hot到Word2Vec，再到上下文感知嵌入（BERT）和对比学习嵌入（SimCSE/BGE/E5），向量表示技术不断演进。在现代AI系统中，嵌入是检索增强生成（RAG）、语义搜索、推荐系统和多模态对齐的核心基础。
+## 概述
 
-## 2. 发展历史
+本笔记聚焦**大语言模型架构中的 token embedding 层**这一组件。广义的向量表示（Word2Vec / GloVe 的词向量历史、SimCSE / BGE 等检索嵌入模型、RAG 向量召回）不属于 LLM 核心架构，见：
 
-| 时间 | 里程碑 | 特点 |
-|------|--------|------|
-| ~2000 | One-hot / TF-IDF | 稀疏表示，无语义信息 |
-| 2003 | 神经语言模型（Bengio et al.） | 首次学习分布式词表示 |
-| 2013 | **Word2Vec**（Mikolov et al.） | 大规模词嵌入训练 |
-| 2014 | **GloVe**（Pennington et al.） | 全局共现统计+局部上下文 |
-| 2015 | **fastText**（Bojanowski et al.） | 子词嵌入，处理OOV |
-| 2018 | **ELMo**（Peters et al.） | 上下文感知嵌入（双向LSTM） |
-| 2018 | **BERT**（Devlin et al.） | Transformer上下文嵌入 |
-| 2021 | **SimCSE**（Gao et al.） | 对比学习优化句嵌入 |
-| 2022 | **E5**（Wang et al.） | 指令微调嵌入 |
-| 2022 | text-embedding-ada-002 | OpenAI商用嵌入API |
-| 2023 | **BGE**（智源） | 中英文高性能嵌入 |
-| 2024 | **Matryoshka嵌入** | 多粒度嵌入维度 |
-| 2024 | **Late Chunking** | 长文档高效嵌入 |
+- 词向量与早期表示学习（Word2Vec / GloVe / FastText / ELMo）→ [[01_词向量与早期表示学习]]（09_预训练语言模型 方向）
+- 检索嵌入模型与语义召回（SimCSE / E5 / BGE / Matryoshka / Late Chunking）→ [[19_LLM应用工程/03_RAG系统]]（19_LLM应用工程 方向）
 
-## 3. 核心概念
+## 核心概念
 
-### 3.1 分布式假设
+### Token Embedding 层
 
-"一个词的含义由它的上下文决定"——出现在相似上下文中的词具有相似的含义。这是所有词嵌入方法的理论基础。
+LLM 的输入是 token id 序列，embedding 层是一个可训练的查找表：
 
-### 3.2 嵌入空间性质
+$$E \in \mathbb{R}^{V \times d}, \quad x_t = E[\text{token}_t]$$
 
-- **语义相似度**：语义相似的文本在嵌入空间中距离更近
-- **线性关系**：部分语义关系可通过向量运算捕获（如 $\vec{国王} - \vec{男人} + \vec{女人} \approx \vec{女王}$）
-- **各向异性**：嵌入向量倾向于聚集在特定锥形区域，对比学习可缓解此问题
-- **维度选择**：常用维度为768、1024、1536，维度越高表达能力越强但计算成本越大
+其中 $V$ 是词表大小，$d$ 是模型维度。embedding 层是模型唯一的离散→连续接口，之后所有计算都在连续空间进行。
 
-### 3.3 静态 vs 上下文感知嵌入
+### Embedding 与位置编码的组合
 
-| 类型 | 特点 | 代表 |
-|------|------|------|
-| 静态嵌入 | 每个词固定一个向量，不随上下文变化 | Word2Vec、GloVe |
-| 上下文感知嵌入 | 同一词在不同上下文中生成不同向量 | BERT、GPT系列 |
+LLM 的输入表示 = token embedding + position encoding：
 
-静态嵌入无法处理多义词（如"苹果"可以是水果也可以是公司），上下文感知嵌入通过Transformer动态生成解决了这一问题。
+$$h_0 = \text{Embed}(\text{token}) + \text{PE}(\text{pos})$$
 
-## 4. 技术原理
+- 原始 Transformer / GPT-2：直接相加
+- 现代LLM（LLaMA / Qwen / DeepSeek）：使用 RoPE，**不与 embedding 相加**，而是在注意力计算中旋转注入（见 [[03_位置编码]]）
 
-### 4.1 传统词嵌入
+### Embedding 缩放
 
-#### Word2Vec（2013）
+原始 Transformer 对 embedding 乘以 $\sqrt{d_{model}}$ 缩放，使 embedding 与位置编码量纲匹配：
 
-两种架构学习分布式表示：
+$$h_0 = \text{Embed}(\text{token}) \cdot \sqrt{d_{model}} + \text{PE}(\text{pos})$$
 
-- **CBOW（Continuous Bag-of-Words）**：根据上下文预测目标词，适合低频词，训练快
-- **Skip-gram**：根据目标词预测上下文，适合高频词和生僻词，效果通常更好
+现代 LLM 多不再使用此缩放（因改用 RoPE 且有 RMSNorm 稳定数值），但 GPT-2 等仍保留。
 
-优化方法：
-- **Hierarchical Softmax**：用霍夫曼树加速softmax计算
-- **Negative Sampling**：随机采样负例，近似softmax
+## 技术细节
 
-#### GloVe（2014）
+### 权重 Tying（Embedding Sharing）
 
-结合全局词共现统计和局部上下文信息：
+将**输入 embedding 矩阵**与**输出投影矩阵**（lm_head）共享同一参数：
 
-$$J = \sum_{i,j} f(X_{ij}) (w_i^T w_j + b_i + b_j - \log X_{ij})^2$$
+$$\text{logits} = h \cdot E^T$$
 
-其中 $X_{ij}$ 是词 $i$ 和词 $j$ 的共现次数，$f(\cdot)$ 是加权函数（限制高频词的影响）。
+- **优势**：大幅减少参数量（$V \times d$ 在小模型中占比可观）
+- **代价**：输入表示与输出表示被强制同一空间，可能损失少量质量
+- **实践**：GPT-2 使用 tying；LLaMA / Qwen 等现代 LLM 通常**不 tying**（untied），输入输出分别学习，质量更优
 
-#### FastText（2016）
+### 词表大小与维度选择
 
-将词汇分解为字符n-gram：
-- 每个词 = 所有字符n-gram的向量之和
-- 能处理未登录词（OOV）和形态丰富的语言
-- 牺牲少量精度换取泛化能力
+| 模型 | 词表大小 $V$ | 模型维度 $d$ | 备注 |
+|:---|:---|:---|:---|
+| GPT-2 | 50,257 | 768-1600 | BPE |
+| LLaMA 2 | 32,000 | 4096-8192 | SentencePiece BPE |
+| LLaMA 3 | 128,256 | 4096-16384 | 扩大词表以支持多语言与代码 |
+| Qwen 2 | 151,646 | 3584-8192 | 大词表覆盖多语言 |
+| DeepSeek-V3 | 129,280 | 7168 | tiktoken 风格 |
 
-### 4.2 上下文感知嵌入
+要点：
 
-#### BERT嵌入
+- **词表越大**：单 token 信息密度高、序列更短，但 embedding 参数量 $V \times d$ 增大（LLaMA 3 的 128K 词表 × 4096 ≈ 5亿参数）。
+- **词表越小**：序列更长、embedding 参数少，但压缩率高、对分词器质量敏感。
+- 现代趋势是扩大词表（100K+）以更好支持多语言、代码与 Unicode。
 
-输入表示 = Token Embedding + Segment Embedding + [[位置编码]]
+### Embedding 与归一化
 
-BERT的`[CLS]`token的最终隐藏状态常被用作句子级嵌入，但研究表明其嵌入质量存在各向异性问题。
+现代 LLM 在 embedding 之后立即接 RMSNorm（而非 LayerNorm）：
 
-#### LLM隐藏层嵌入
+$$\text{RMSNorm}(x) = \frac{x}{\sqrt{\text{mean}(x^2) + \epsilon}} \cdot \gamma$$
 
-从GPT/LLaMA等模型提取隐藏层向量作为嵌入：
-- 最后一层：语义最丰富但可能有任务偏向
-- 中间层：有时更通用
-- 均值池化：对所有token向量取平均，通常优于`[CLS]`
+RMSNorm 去掉 LayerNorm 的减均值操作，计算更高效，LLaMA / Qwen / DeepSeek 均采用。见 [[10_大语言模型核心架构/01_LLM整体架构]]。
 
-### 4.3 对比学习嵌入
+### 上下文嵌入（Contextual Embedding）
 
-通过对比学习优化语义相似度，核心思想：**拉近正例对，推远负例对**。
+LLM 每一层的隐藏状态都是"上下文感知的 token 嵌入"——同一 token 在不同上下文中得到不同向量。这是 LLM 相对静态词向量（Word2Vec）的根本优势。从 LLM 隐藏层提取嵌入用于下游任务（检索、分类）的方法见 [[19_LLM应用工程/03_RAG系统]]。
 
-#### SimCSE（2021）
+## 应用场景
 
-- **无监督SimCSE**：用Dropout生成正例对（同一句子两次前向传播，Dropout引入随机性）
-- **有监督SimCSE**：使用NLI（自然语言推理）数据集，蕴含关系为正例，矛盾关系为困难负例
+- **LLM 输入接口**：所有 token 先经 embedding 层进入模型
+- **迁移学习**：冻结 embedding 层微调上层（参数高效）
+- **多模态扩展**：视觉 token / 音频 token 通过各自 embedding 层对齐到语言模型维度（见 [[00_多模态AI_综述]]）
 
-对比学习损失函数：
-
-$$\mathcal{L} = -\log \frac{e^{sim(h_i, h_i^+)/\tau}}{\sum_{j} e^{sim(h_i, h_j^+)/\tau}}$$
-
-#### 关键发展
-
-- **ConSERT**：多种数据增强（随机删除、同义词替换、回译）
-- **E5**：指令微调 + 弱监督对比学习
-- **BGE**：多阶段训练（预训练→通用微调→任务微调）
-
-### 4.4 指令微调嵌入
-
-借鉴LLM的指令微调思想，为嵌入模型添加任务指令：
-
-```
-[INST] 检索与查询相关的文档 [/INST]
-查询：什么是注意力机制？
-```
-
-使同一模型能处理多种嵌入任务（检索、分类、聚类等）。
-
-### 4.5 嵌入粒度
-
-| 粒度 | 生成方式 | 适用场景 |
-|------|---------|---------|
-| Token-level | 每个token向量 | NER、词性标注、机器翻译 |
-| Sentence-level | 平均池化/CLS/专用模型 | 语义相似度、文本分类 |
-| Document-level | 整文档单一向量 | 文档检索、推荐系统 |
-| Chunk-level | 文档分块后嵌入 | RAG系统 |
-
-### 4.6 Matryoshka 嵌入
-
-2024年的重要进展：训练一个支持多种维度的嵌入模型。
-
-- 类似俄罗斯套娃（Matryoshka doll），嵌入的前 $d$ 维即可作为 $d$ 维嵌入使用
-- 前几维捕获粗粒度语义，后续维度捕获细粒度信息
-- 优势：同一模型可灵活选择维度，适配不同存储/精度需求
-
-### 4.7 Late Chunking
-
-2024年Jina AI提出的长文档嵌入方法：
-- 传统方法：先分块再嵌入，丢失全局上下文
-- Late Chunking：先用长上下文模型编码整个文档，再分块提取嵌入
-- 优势：每个块的嵌入包含全文上下文信息，检索质量更高
-
-## 5. 关键方法/模型
-
-### 5.1 主流嵌入模型对比
-
-| 模型 | 维度 | 训练方法 | 特点 |
-|------|------|---------|------|
-| BGE-large-en | 1024 | 对比学习+指令微调 | 英文性能优异 |
-| BGE-large-zh | 1024 | 对比学习+指令微调 | 中文性能优异 |
-| E5-large-v2 | 1024 | 指令微调 | 指令感知 |
-| text-embedding-ada-002 | 1536 | 对比学习 | OpenAI商用 |
-| text-embedding-3-large | 3072 | 对比学习+Matryoshka | 支持维度截断 |
-| GTE-large | 1024 | 对比学习 | 多语言 |
-| all-MiniLM-L6-v2 | 384 | 对比学习 | 轻量级，速度快 |
-| bge-m3 | 1024 | 多功能 | 稠密+稀疏+多向量 |
-
-### 5.2 嵌入质量评估
-
-| 评估维度 | 指标 | 数据集 |
-|---------|------|--------|
-| 语义文本相似度 | Pearson/Spearman相关系数 | STS-B、STS12-22 |
-| 检索质量 | MRR、NDCG、Recall@K | MSMARCO、BEIR |
-| 聚类质量 | Purity、ARI、NMI | 规范化聚类数据集 |
-| 分类 | Accuracy、F1 | SentEval工具包 |
-
-### 5.3 重要论文
-
-| 论文 | 作者 | 年份 | 核心贡献 |
-|------|------|------|---------|
-| Efficient Estimation of Word Representations in Vector Space | Mikolov et al. | 2013 | Word2Vec |
-| GloVe: Global Vectors for Word Representation | Pennington et al. | 2014 | GloVe |
-| BERT: Pre-training of Deep Bidirectional Transformers | Devlin et al. | 2018 | 上下文感知嵌入 |
-| SimCSE: Simple Contrastive Learning of Sentence Embeddings | Gao et al. | 2021 | 对比学习句嵌入 |
-| Text Embeddings by Weakly-Supervised Contrastive Pre-training | Wang et al. | 2022 | E5 |
-
-## 6. 优势与局限
+## 优势与局限
 
 ### 优势
 
-- **语义捕获**：将离散文本映射为连续语义空间，支持相似度计算
-- **泛化能力**：对比学习嵌入对未见过的文本有良好泛化
-- **多语言**：跨语言嵌入支持多语言检索
-- **灵活性**：不同粒度（token/句子/文档）适配不同任务
+- **简洁**：单一查找表完成离散→连续映射
+- **可学习**：端到端学习 token 的最优表示
 
 ### 局限
 
-- **各向异性**：嵌入向量倾向于聚集在窄锥形区域，降低区分度
-- **长文本信息丢失**：将长文档压缩为单一向量必然丢失细节
-- **时效性**：静态嵌入无法反映知识更新
-- **领域偏移**：通用嵌入在特定领域（医疗、法律）可能表现不佳
-- **维度诅咒**：高维空间中距离区分度下降，需降维处理
+- **参数量大**：大词表（128K）下 embedding 参数可达数亿，对小模型占比显著
+- **OOV 依赖分词器**：embedding 质量受分词器（BPE/SentencePiece）影响
+- **静态性**：同一 token 的 embedding 在所有上下文相同，依赖后续层注入上下文
 
-## 7. 应用场景
+## 相关知识
 
-- **语义检索**：RAG系统的向量召回核心
-- **文本分类与聚类**：嵌入作为特征输入下游模型
-- **推荐系统**：用户-物品嵌入匹配
-- **多模态对齐**：CLIP将文本和图像嵌入对齐到共享空间
-- **去重与查重**：嵌入相似度检测近似文本
-- **意图识别**：对话系统中用户意图分类
+- [[01_词向量与早期表示学习]] — 词向量历史（Word2Vec/GloVe/FastText/ELMo）
+- [[03_位置编码]] — LLM 位置编码视角
+- [[10_大语言模型核心架构/01_LLM整体架构]] — LLM 整体架构
+- [[19_LLM应用工程/03_RAG系统]] — 检索嵌入模型与语义召回
+- [[00_多模态AI_综述]] — 多模态 token 对齐
 
-## 8. 与其他技术关系
+## References
 
-- [[向量表示与Embedding]]建立在[[分词与Tokenization]]之上
-- 上下文感知嵌入依赖[[Transformer]]架构
-- [[位置编码]]是LLM嵌入设计的组成部分
-- 向量检索是RAG系统的核心环节（见[[19_LLM应用工程/03_RAG系统]]）
-- 嵌入质量直接影响[[长上下文与记忆机制]]中RAG的效果
-- 嵌入是多模态AI中文本-图像对齐的基础
-
-## 9. 前沿发展
-
-### 9.1 多功能嵌入
-
-**BGE-M3**（2024）：一个模型同时支持：
-- 稠密检索（Dense Retrieval）
-- 稀疏检索（Sparse Retrieval，类似BM25）
-- 多向量检索（Multi-vector，ColBERT风格）
-- 三种检索方式融合，性能显著提升
-
-### 9.2 Matryoshka 表示
-
-支持灵活维度选择的嵌入模型，同一模型可输出64/128/256/.../3072维嵌入，适配不同存储和延迟需求。
-
-### 9.3 长文档嵌入
-
-- **Late Chunking**：保留全文上下文的分块嵌入
-- **上下文感知嵌入**：根据周围文档调整每个块的嵌入
-- **层级嵌入**：文档→段落→句子的层级表示
-
-### 9.4 嵌入+LLM融合
-
-- **嵌入作为LLM输入**：将检索到的嵌入直接注入LLM
-- **软提示（Soft Prompt）**：将嵌入作为可学习前缀
-- **LLM生成嵌入**：利用LLM自身隐藏层生成高质量嵌入
-
-### 9.5 理论进展
-
-- **各向异性研究**：深入理解嵌入空间几何性质
-- **信息瓶颈理论**：嵌入的信息压缩与保留理论
-- **缩放定律**：嵌入模型性能与数据量/模型大小的关系
+- Vaswani et al., *Attention Is All You Need*, 2017.（embedding 缩放 $\sqrt{d_{model}}$）
+- Touvron et al., *LLaMA: Open and Efficient Foundation Language Models*, 2023.（RMSNorm、untied embedding）
+- Press & Wolf, *Using the Output Embedding to Improve Language Models*, 2016.（权重 tying）

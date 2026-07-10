@@ -1,5 +1,9 @@
 # RLHF
 
+## 一句话理解
+
+RLHF 用人类偏好排序数据训练一个奖励模型，再以奖励模型为信号用 PPO 强化学习优化语言模型，使其输出对齐人类偏好——InstructGPT 将其标准化为 SFT → RM → PPO 三阶段，是现代大模型对齐的奠基技术。
+
 ## 1. 概述
 
 RLHF（Reinforcement Learning from Human Feedback）是通过人类反馈训练和优化大语言模型的对齐方法。RLHF是现代大模型对齐的奠基性技术，InstructGPT（2022）将其系统化为三阶段流程（SFT→RM→PPO），ChatGPT将其推向主流。
@@ -75,7 +79,7 @@ PPO使用裁剪机制限制策略更新幅度，防止训练不稳定：
 
 $$\mathcal{L}_{PPO} = \mathbb{E}\left[\min\left(r_t \hat{A}_t, \, \text{clip}(r_t, 1-\epsilon, 1+\epsilon) \hat{A}_t\right)\right]$$
 
-其中 $r_t = \frac{\pi_\theta(y|x)}{\pi_{old}(y|x)}$ 是策略概率比，$\hat{A}_t$ 是优势函数估计，$\epsilon$ 是裁剪范围。
+其中 $r_t = \frac{\pi_\theta(y|x)}{\pi_{old}(y|x)}$ 是新策略与采样策略的概率比，$\hat{A}_t$ 是优势函数估计，$\epsilon$ 是裁剪范围（通常 0.1-0.2）。`min` 与 `clip` 的组合使目标在 $r_t$ 偏离 1 过远时取悲观值：当 $\hat{A}_t > 0$（好动作）时限制 $r_t$ 不超过 $1+\epsilon$，当 $\hat{A}_t < 0$（差动作）时限制 $r_t$ 不低于 $1-\epsilon$，从而阻止单步过大更新。
 
 ### 4.5 优势函数估计
 
@@ -164,10 +168,10 @@ $$\hat{A} = r(x,y) - V_\psi(x)$$
 
 ## 8. 与其他技术关系
 
-- RLHF在[[监督微调]]之后进行，SFT模型是RLHF的起点
-- [[DPO]]是RLHF的简化方案，去除奖励模型和PPO，数学上等价
-- [[RLAIF]]用AI反馈替代RLHF中的人类反馈
-- [[GRPO]]去除奖励模型和Critic，用组内比较替代
+- RLHF在[[03_监督微调|监督微调]]之后进行，SFT模型是RLHF的起点
+- [[06_DPO|DPO]]是RLHF的简化方案，去除奖励模型和PPO，数学上等价
+- [[07_RLAIF|RLAIF]]用AI反馈替代RLHF中的人类反馈
+- [[08_GRPO|GRPO]]去除奖励模型和Critic，用组内比较替代
 - PPO来源于强化学习（方向13）
 - KL约束中的散度计算是信息论的基础工具
 
@@ -190,3 +194,30 @@ $$\hat{A} = r(x,y) - V_\psi(x)$$
 - **AI反馈（RLAIF）**：用强模型替代人类标注
 - **规则反馈**：用可执行规则替代奖励模型（GRPO）
 - **多维度反馈**：分别建模安全性、有用性、真实性等维度
+
+## 常见问题
+
+- **RLHF 与 SFT 的关系？** SFT 是 RLHF 的第一阶段与起点——SFT 赋予指令跟随能力，RLHF（RM+PPO）在 SFT 基础上用偏好信号塑造行为。RLHF 之前必须有 SFT，否则策略太弱无法收集有效偏好。
+- **为什么需要 KL 约束？** 若无 KL 项，策略会为最大化奖励而漂移到 RM 的盲区，导致 reward hacking 和语言退化（输出语法怪异但 RM 给高分）。KL 约束把策略锚定在 SFT 参考模型附近，保住基础语言质量。
+- **RM 为何用 Bradley-Terry 损失？** 偏好数据是两两比较（$y_w \succ y_l$），Bradley-Terry 假设偏好概率 $\propto \sigma(r(y_w) - r(y_l))$，其对数似然正好给出 $\mathcal{L}_{RM}$，是与成对偏好数据天然匹配的建模。
+- **PPO 在 RLHF 中为何不稳？** 4 个模型同显存、奖励稀疏且带噪、KL 与奖励相互拉扯、文本生成是高维离散动作空间。常见信号：奖励上升但 KL 失控（hacking）、或奖励停滞（学习率/clip 范围不合适）。
+- **何时选 RLHF 而非 DPO？** RLHF 在线采样探索更强、上限更高，适合追求极致质量且工程能力强的团队；DPO 离线、简洁、稳定、成本更低，是大多数开源对齐的默认选择。
+
+## 相关知识
+
+- [[03_监督微调]] — RLHF 的第一阶段与起点
+- [[04_偏好对齐方法]] — DPO/KTO/SimPO 等 RLHF 的简化替代
+- [[06_DPO]] — 去除 RM 与 PPO 的直接偏好优化
+- [[07_RLAIF]] — AI 反馈替代人类反馈
+- [[08_GRPO]] — 去除 Critic 的组相对策略优化
+- [[00_强化学习_综述]] — PPO 的强化学习理论基础
+- [[00_AI安全与对齐_综述]] — 对齐的整体框架
+
+## References
+
+- Christiano et al., *Deep Reinforcement Learning from Human Preferences*, NeurIPS 2017. — RLHF 雏形（偏好 + RL）
+- Ouyang et al., *Training language models to follow instructions with human feedback (InstructGPT)*, NeurIPS 2022. — SFT→RM→PPO 三阶段标准化
+- Schulman et al., *Proximal Policy Optimization Algorithms*, 2017. — PPO
+- Schulman et al., *High-Dimensional Continuous Control Using Generalized Advantage Estimation (GAE)*, ICLR 2016. — 优势估计方差缩减
+- Bai et al., *Training a Helpful and Harmless Assistant with RLHF*, Anthropic 2022. — HH-RLHF 实践
+- Bradley & Terry, *Rank Analysis of Incomplete Block Designs: The Method of Paired Comparisons*, 1952. — Bradley-Terry 偏好模型

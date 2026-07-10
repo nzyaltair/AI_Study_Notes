@@ -136,8 +136,8 @@ Compacter通过低秩分解和跨层共享参数进一步减少参数量：
 
 ## 8. 与其他技术关系
 
-- Adapter是[[参数高效微调]]的重要方法之一
-- [[LoRA]]在多数场景下性能优于Adapter，但Adapter的非线性结构在特定任务有优势
+- Adapter是[[10_参数高效微调|参数高效微调]]的重要方法之一
+- [[11_LoRA|LoRA]]在多数场景下性能优于Adapter，但Adapter的非线性结构在特定任务有优势
 - AdapterFusion支持多适配器知识融合，是LoRA不具备的能力
 - Adapter可与模型并行、分布式训练结合
 

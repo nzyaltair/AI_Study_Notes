@@ -143,11 +143,11 @@ $$M_{\text{KV}} = 2 \times n_{\text{layers}} \times \text{batch} \times n_{\text
 
 ## 8. 与其他技术关系
 
-- KV-Cache 是 [[注意力机制]] 在推理阶段的工程实现
-- [[量化]] 技术可应用于 KV-Cache 以减少显存
+- KV-Cache 是 [[08_Transformer与注意力机制/02_Self-Attention与多头注意力|注意力机制]] 在推理阶段的工程实现
+- [[02_量化技术|量化]] 技术可应用于 KV-Cache 以减少显存
 - PagedAttention 是 [[04_推理加速与并行]] 中的核心创新
 - 缓存驱逐与 [[06_长上下文扩展]] 密切相关
-- GQA/MQA/MLA 影响模型架构设计，参见 [[大语言模型]]
+- GQA/MQA/MLA 影响模型架构设计，参见 [[10_大语言模型核心架构]]
 - KV-Cache 显存直接影响 [[07_成本与延迟权衡]] 中的并发能力
 
 ## 9. 前沿发展
@@ -157,3 +157,13 @@ $$M_{\text{KV}} = 2 \times n_{\text{layers}} \times \text{batch} \times n_{\text
 - **语义感知缓存压缩**：基于注意力模式和语义重要性自适应压缩 KV-Cache
 - **跨请求 KV-Cache 共享**：在多用户场景下共享公共 prompt 的 KV-Cache
 - **KV-Cache 原生量化**：FP8 KV-Cache 在 Hopper 架构上的硬件加速
+
+## References
+
+- Shazeer, *Fast Transformer Decoding: One Write-Head Is All You Need* (2019) — MQA
+- Ainslie et al., *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints* (2023) — GQA
+- Kwon et al., *Efficient Memory Management for Large Language Model Serving with PagedAttention* (2023) — vLLM/PagedAttention
+- Xiao et al., *Efficient Streaming Language Models with Attention Sinks* (2023) — StreamingLLM
+- Zhang et al., *H2O: Heavy-Hitter Oracle for Efficient Generative Inference of Large Language Models* (2023)
+- DeepSeek-AI, *DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model* (2024) — MLA
+- [vLLM 官方文档](https://docs.vllm.ai/)

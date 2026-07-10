@@ -1,5 +1,9 @@
 # Self-Attention 与多头注意力
 
+## 一句话理解
+
+自注意力让序列中每个位置以 $O(1)$ 路径长度直接关注所有其他位置（Q/K/V 同源），多头机制则将其投影到多个子空间并行计算后拼接，使模型同时学习多种注意力模式——二者共同构成 Transformer 的核心计算单元。
+
 ## 1. 概述
 
 自注意力（Self-Attention）是 [[01_注意力机制原理|注意力机制]] 的特例：Query、Key、Value 均来自同一输入序列。它使序列中每个位置能够直接与所有其他位置交互，捕捉全局依赖关系，路径长度为 $O(1)$。多头注意力（Multi-Head Attention, MHA）是自注意力的扩展：将 QKV 投影到多个子空间分别计算注意力后拼接，使模型能同时学习多种注意力模式。二者共同构成 Transformer 的核心计算单元。
@@ -239,3 +243,26 @@ scores = scores.masked_fill(mask == 0, float('-inf'))
 - **动态头数**：根据输入复杂度动态调整激活的注意力头数量
 - **KV-Cache 压缩**：MLA 之后，量化 KV-Cache（如 KIVI、KVQuant）进一步降低推理内存
 - **注意力与 SSM 融合**：Jamba 等混合架构交替使用注意力层和 SSM 层，兼顾全局建模和线性效率
+
+## 常见问题
+
+- **为什么缩放因子是 $\sqrt{d_k}$ 而不是 $d_k$？** 当 $d_k$ 较大时，$QK^T$ 的方差约为 $d_k$，点积数量级变大导致 softmax 进入饱和区（梯度趋零）。除以 $\sqrt{d_k}$ 使方差恢复为 1，梯度保持健康。除以 $d_k$ 会过度缩小，使分布过于平坦、损失区分度。
+- **头数越多越好吗？** 不是。头数 $h$ 增加则每头维度 $d_k = d_{model}/h$ 减小，表达能力下降；头数过少则子空间不足。经验上 $d_k$ 在 64 左右效果较好（如 $d_{model}=512, h=8$）。
+- **MQA/GQA/MLA 会不会损失质量？** MQA 质量下降较明显，GQA 几乎无损（LLaMA 2 70B 验证），MLA 通过低秩压缩+上投影恢复甚至超越 MHA 质量（DeepSeek-V2）。权衡的是 KV-Cache 显存与质量。
+- **多头能否用一次大矩阵乘替代？** 实现上确实将 $h$ 个头的投影拼成大矩阵 $W^Q/W^K/W^V \in \mathbb{R}^{d \times d}$ 一次计算，再 reshape 成多头。多头的"多"体现在 reshape 后分组计算注意力的逻辑结构。
+
+## 相关知识
+
+- [[01_注意力机制原理]] — 注意力基础与类型
+- [[10_大语言模型核心架构/02_注意力机制]] — LLM 视角（MQA/GQA/MLA）
+- [[04_位置编码]] — 注意力的位置信息补充
+- [[05_高效注意力机制]] — 高效注意力变体
+- [[12_大模型推理与优化/01_KV-Cache机制]] — 推理时的 K/V 缓存
+
+## References
+
+- Vaswani et al., *Attention Is All You Need*, NeurIPS 2017. — 自注意力与多头注意力的提出
+- Shazeer, *Fast Transformer Decoding: One Write-Head is All You Need*, 2019. — MQA
+- Ainslie et al., *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints*, EMNLP 2023. — GQA
+- DeepSeek-AI, *DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model*, 2024. — MLA
+- Elhage et al., *A Mathematical Framework for Transformer Circuits*, Anthropic 2021. — 注意力头功能与机械可解释性

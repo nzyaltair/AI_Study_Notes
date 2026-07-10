@@ -163,3 +163,9 @@ $$\hat{\mathbf{y}} = \arg\max_{\mathbf{y}} \left( \log p_{\text{CTC}}(\mathbf{y}
 - **CTC 的改进版本**：RNN-Transducer、GTC（Graphical TC）、Star-CTC 等工作试图在保持 CTC 效率的同时引入标签间依赖建模
 - **CTC 在自监督学习中**：wav2vec 2.0 等自监督语音预训练模型使用 CTC 作为微调目标，展示了 CTC 在迁移学习中的价值
 - **与 SSM 的结合**：Mamba-ASR 等工作探索了用状态空间模型替代 Transformer/RNN 作为 CTC 的编码器骨干
+
+## 相关知识
+
+- 前置：[[01_循环神经网络RNN]]、[[05_双向RNN与深层RNN]]
+- 平级：[[08_序列模型工程实践]]
+- 延伸：[[../16_自然语言处理/05_序列标注模型]]

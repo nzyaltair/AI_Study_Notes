@@ -142,3 +142,14 @@ $$q_m'^T k_n' = q_m^T R_m^T R_n k_n = q_m^T R_{n-m} k_n$$
 4. 在 WMT 机器翻译数据上训练一个小型 Transformer
 5. 实现 Grouped-Query Attention 并测量推理加速
 6. 分析注意力矩阵的秩与信息瓶颈
+
+## References
+
+- Vaswani et al., *Attention Is All You Need* (2017) — [arXiv:1706.03762](https://arxiv.org/abs/1706.03762) — Transformer 原始论文
+- Devlin et al., *BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding* (2019) — [arXiv:1810.04805](https://arxiv.org/abs/1810.04805)
+- Dosovitskiy et al., *An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale* (2021) — [arXiv:2010.11929](https://arxiv.org/abs/2010.11929) — ViT
+- Dao et al., *FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness* (2022) — [arXiv:2205.14135](https://arxiv.org/abs/2205.14135) — FlashAttention
+- Ainslie et al., *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints* (2023) — [arXiv:2305.13245](https://arxiv.org/abs/2305.13245) — GQA
+- Su et al., *RoFormer: Enhanced Transformer with Rotary Position Embedding* (2021) — [arXiv:2104.09864](https://arxiv.org/abs/2104.09864) — RoPE
+- Gu & Dao, *Mamba: Linear-Time Sequence Modeling with Selective State Spaces* (2023) — [arXiv:2312.00752](https://arxiv.org/abs/2312.00752) — Mamba
+- Raffel et al., *Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer* (2020) — [arXiv:1910.10683](https://arxiv.org/abs/1910.10683) — T5

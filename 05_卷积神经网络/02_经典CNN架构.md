@@ -238,7 +238,7 @@ $$x_l = H_l([x_0, x_1, ..., x_{l-1}])$$
 ## 8. 与其他技术关系
 
 - 残差连接 → [[00_Transformer与注意力机制_综述|Transformer]] 的 Add & Norm 设计
-- VGG的规整性 → [[04_图像分割]] FCN直接复用VGG作为编码器
+- VGG的规整性 → [[../15_计算机视觉/05_图像分割|图像分割]] FCN直接复用VGG作为编码器
 - ResNet的Bottleneck设计 → MobileNet v2倒置残差（Inverted Residual）的来源
 - Inception的多尺度思想 → FPN（特征金字塔）的多尺度特征融合
 - ConvNeXt → [[06_CV前沿发展]] 中CNN现代化的里程碑

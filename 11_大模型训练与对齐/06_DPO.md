@@ -1,5 +1,9 @@
 # DPO
 
+## 一句话理解
+
+DPO 把偏好对齐从"训练奖励模型 + PPO 强化学习"简化为"直接在偏好数据上做二分类"，数学上与 RLHF 等价但流程更简、更稳定。
+
 ## 1. 概述
 
 DPO（Direct Preference Optimization，直接偏好优化）是一种直接从偏好数据优化语言模型的对齐方法，由Rafailov et al.（2023, Stanford）提出。DPO通过理论推导将奖励函数隐式地表示为策略概率比，从而跳过奖励模型训练和PPO优化，大幅简化对齐流程。
@@ -159,6 +163,14 @@ Iterative DPO通过多轮迭代克服DPO离线学习的局限：
 - [[08_GRPO|GRPO]]与DPO不同，仍使用在线强化学习
 - SimPO、IPO、KTO、ORPO等是DPO的改进变体，详见[[09_其他偏好对齐方法|其他偏好对齐方法]]
 
+## 常见问题
+
+- **DPO 能完全替代 RLHF 吗？** 不能。DPO 是离线方法，探索能力弱，受限于偏好数据覆盖；需要在线探索或精细奖励信号时 RLHF/GRPO 仍更合适。
+- **$\beta$ 怎么选？** 小模型 0.3–1.0，大模型 0.01–0.1。$\beta$ 过小则过拟合偏好数据、偏离参考模型；过大则学不到偏好。
+- **为什么 DPO 需要参考模型？** 参考策略（通常是 SFT 模型）提供 KL 正则化，防止模型为迎合偏好而退化；SimPO/ORPO 等变体去除了它。
+- **DPO 为什么容易过拟合？** 偏好数据通常较少，且损失直接拉大 chosen/rejected 概率差，易在少量数据上过拟合；IPO 用平方损失缓解。
+- **DPO 和 GRPO 的区别？** DPO 离线、无显式奖励模型；GRPO 仍是在线 RL，用组内相对优势估计奖励，探索更强但更复杂。
+
 ## 9. 前沿发展
 
 ### 9.1 去除参考模型
@@ -177,3 +189,16 @@ Iterative DPO通过多轮迭代克服DPO离线学习的局限：
 - **统一理论框架**：IPO提出了涵盖DPO/RLHF的通用理论范式
 - **多维度对齐**：分别建模安全性、有用性等不同维度
 - **非配对反馈**：KTO支持只需"好/坏"标注的数据格式
+
+## 相关知识
+
+- 前置：[[05_RLHF|RLHF]]、[[03_监督微调|监督微调]]、[[04_偏好对齐方法|偏好对齐方法]]
+- 平级：[[07_RLAIF|RLAIF]]、[[08_GRPO|GRPO]]、[[09_其他偏好对齐方法|其他偏好对齐方法]]
+- 延伸：[[10_参数高效微调|参数高效微调]]（DPO + LoRA 是常见低成本对齐组合）
+
+## References
+
+- Rafailov et al., *Direct Preference Optimization: Your Language Model is Secretly a Reward Model*, NeurIPS 2023. https://arxiv.org/abs/2305.18290
+- Azar et al., *A General Theoretical Paradigm to Understand Learning from Human Feedback* (IPO), 2023. https://arxiv.org/abs/2310.12036
+- Ethayarajh et al., *KTO: Model Alignment as Prospect Theoretic Optimization*, ICML 2024. https://arxiv.org/abs/2402.01306
+- Meng et al., *SimPO: Simple Preference Optimization with a Reference-Free Reward*, 2024. https://arxiv.org/abs/2405.14734

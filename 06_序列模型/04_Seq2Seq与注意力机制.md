@@ -145,3 +145,9 @@ $$p(y_t | y_{<t}, \mathbf{x}) = \text{softmax}(W_o [s_t, c_t] + b_o)$$
 - **非自回归解码**：CTC、NAT（Non-Autoregressive Transformer）等工作试图打破自回归的限制，实现并行生成
 - **推测解码（Speculative Decoding）**：用小型模型快速生成草稿，大型模型并行验证，大幅加速自回归推理
 - **检索增强（RAG）的注意力**：在 Seq2Seq 框架中引入检索到的外部知识，注意力池从固定编码器输出扩展到动态检索数据库
+
+## 相关知识
+
+- 前置：[[01_循环神经网络RNN]]、[[02_长短期记忆网络LSTM]]
+- 平级：[[07_状态空间模型SSM]]
+- 延伸：[[../08_Transformer与注意力机制/00_Transformer与注意力机制_综述]]、[[../08_Transformer与注意力机制/01_注意力机制原理]]

@@ -97,6 +97,13 @@ LLM 每一层的隐藏状态都是"上下文感知的 token 嵌入"——同一 
 - **OOV 依赖分词器**：embedding 质量受分词器（BPE/SentencePiece）影响
 - **静态性**：同一 token 的 embedding 在所有上下文相同，依赖后续层注入上下文
 
+## 常见问题
+
+- **要不要做权重 tying？** 小模型为省参数常 tying（GPT-2）；现代大模型多 untied，输入输出分别学习质量更优（LLaMA/Qwen/DeepSeek）。
+- **词表越大越好吗？** 不一定。大词表单 token 信息密度高、序列短，但 embedding 参数 $V\times d$ 增大（LLaMA 3 的 128K×4096≈5亿）；需在多语言/代码覆盖与参数预算间权衡。
+- **embedding 缩放 $\sqrt{d}$ 还需要吗？** 用绝对位置编码相加时需要（量纲匹配）；改用 RoPE 注入 + RMSNorm 后通常去掉。
+- **LLM 的 embedding 和 RAG 向量是一回事吗？** 不是。本笔记的 embedding 是模型输入查找表；RAG 检索向量是从隐藏层提取的语义嵌入，见 [[19_LLM应用工程/03_RAG系统]]。
+
 ## 相关知识
 
 - [[01_词向量与早期表示学习]] — 词向量历史（Word2Vec/GloVe/FastText/ELMo）

@@ -47,6 +47,7 @@
 - 使用 Obsidian Wikilink `[[...]]` 建立内部知识关系
 - 优先使用权威来源而不是二手搬运内容
 - 在重要笔记中保留 `## References`
+- 表格中避免 `|` 被解析为列分隔符：math 公式中用 `\lvert`/`\rvert` 替代 `|`（绝对值），`\mid` 替代 `|`（条件概率）；Wiki 链接用 `[[page\|alias]]` 转义 `|`
 
 ### 2.2 MUST NOT
 
